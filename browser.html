@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Browser</title>
+
+<style>
+
+body{
+margin:0;
+font-family:system-ui;
+background:#0f172a;
+color:white;
+height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+.tabs{
+display:flex;
+background:#020617;
+padding:6px;
+gap:6px;
+overflow-x:auto;
+}
+
+.tab{
+padding:8px 14px;
+background:#1e293b;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+}
+
+.tab.active{
+background:#2563eb;
+}
+
+.newtab{
+padding:8px 12px;
+background:#22c55e;
+border-radius:8px;
+cursor:pointer;
+}
+
+.toolbar{
+display:flex;
+gap:8px;
+padding:10px;
+background:#020617;
+}
+
+.toolbar button{
+background:#1e293b;
+border:none;
+color:white;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.address{
+flex:1;
+padding:10px;
+border-radius:8px;
+border:none;
+background:#1e293b;
+color:white;
+}
+
+.bookmarks{
+display:flex;
+gap:10px;
+padding:6px 10px;
+background:#020617;
+}
+
+.bookmarks button{
+background:#1e293b;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+iframe{
+flex:1;
+width:100%;
+border:none;
+background:white;
+}
+
+</style>
+
+<script>
+
+let tabs=[]
+let activeTab=0
+
+function createTab(url="https://example.com"){
+
+let id=tabs.length
+
+tabs.push({url:url,history:[url],index:0})
+
+let tab=document.createElement("div")
+tab.className="tab"
+tab.innerText="Tab "+(id+1)
+
+tab.onclick=function(){
+switchTab(id)
+}
+
+document.getElementById("tabs").appendChild(tab)
+
+switchTab(id)
+
+}
+
+function switchTab(id){
+
+activeTab=id
+
+document.querySelectorAll(".tab").forEach((t,i)=>{
+t.classList.toggle("active",i===id)
+})
+
+let tab=tabs[id]
+
+document.getElementById("view").src=tab.url
+document.getElementById("url").value=tab.url
+
+}
+
+function navigate(url){
+
+if(!url.startsWith("http")){
+url="https://"+url
+}
+
+let tab=tabs[activeTab]
+
+tab.url=url
+tab.history=tab.history.slice(0,tab.index+1)
+tab.history.push(url)
+tab.index++
+
+document.getElementById("view").src=url
+document.getElementById("url").value=url
+
+}
+
+function go(){
+
+navigate(document.getElementById("url").value)
+
+}
+
+function search(){
+
+let q=document.getElementById("url").value
+navigate("https://www.google.com/search?q="+encodeURIComponent(q))
+
+}
+
+function back(){
+
+let tab=tabs[activeTab]
+
+if(tab.index>0){
+
+tab.index--
+tab.url=tab.history[tab.index]
+document.getElementById("view").src=tab.url
+document.getElementById("url").value=tab.url
+
+}
+
+}
+
+function forward(){
+
+let tab=tabs[activeTab]
+
+if(tab.index<tab.history.length-1){
+
+tab.index++
+tab.url=tab.history[tab.index]
+document.getElementById("view").src=tab.url
+document.getElementById("url").value=tab.url
+
+}
+
+}
+
+function refresh(){
+
+document.getElementById("view").src=tabs[activeTab].url
+
+}
+
+function bookmark(url){
+
+navigate(url)
+
+}
+
+window.onload=function(){
+
+createTab("https://example.com")
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div class="tabs" id="tabs">
+
+<div class="newtab" onclick="createTab()">+</div>
+
+</div>
+
+<div class="toolbar">
+
+<button onclick="back()">◀</button>
+<button onclick="forward()">▶</button>
+<button onclick="refresh()">⟳</button>
+
+<input id="url" class="address" placeholder="Search or enter website">
+
+<button onclick="go()">Go</button>
+<button onclick="search()">Search</button>
+
+</div>
+
+<div class="bookmarks">
+
+<button onclick="bookmark('https://www.google.com')">Google</button>
+<button onclick="bookmark('https://wikipedia.org')">Wikipedia</button>
+<button onclick="bookmark('https://github.com')">GitHub</button>
+<button onclick="bookmark('https://makerworld.com')">MakerWorld</button>
+
+</div>
+
+<iframe id="view"></iframe>
+
+</body>
+</html>
