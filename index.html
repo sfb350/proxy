@@ -1,252 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mini Browser</title>
+<meta charset="UTF-8">
+<title>Abe Browser</title>
 
 <style>
 
 body{
 margin:0;
-font-family:system-ui;
-background:#0f172a;
+font-family:Arial;
+background:#111;
 color:white;
-height:100vh;
-display:flex;
-flex-direction:column;
 }
 
-.tabs{
+#topbar{
 display:flex;
-background:#020617;
-padding:6px;
-gap:6px;
-overflow-x:auto;
+padding:10px;
+background:#1e1e1e;
+box-shadow:0 2px 10px rgba(0,0,0,0.5);
 }
 
-.tab{
-padding:8px 14px;
-background:#1e293b;
-border-radius:8px;
+#url{
+flex:1;
+padding:10px;
+border:none;
+border-radius:6px;
+font-size:16px;
+}
+
+button{
+margin-left:8px;
+padding:10px 14px;
+border:none;
+border-radius:6px;
+background:#3b82f6;
+color:white;
 cursor:pointer;
-font-size:14px;
 }
 
-.tab.active{
+button:hover{
 background:#2563eb;
 }
 
-.newtab{
-padding:8px 12px;
-background:#22c55e;
-border-radius:8px;
-cursor:pointer;
-}
-
-.toolbar{
-display:flex;
-gap:8px;
-padding:10px;
-background:#020617;
-}
-
-.toolbar button{
-background:#1e293b;
-border:none;
-color:white;
-padding:8px 12px;
-border-radius:6px;
-cursor:pointer;
-}
-
-.address{
-flex:1;
-padding:10px;
-border-radius:8px;
-border:none;
-background:#1e293b;
-color:white;
-}
-
-.bookmarks{
+#bookmarks{
+background:#1a1a1a;
+padding:8px;
 display:flex;
 gap:10px;
-padding:6px 10px;
-background:#020617;
 }
 
-.bookmarks button{
-background:#1e293b;
-border:none;
+.bookmark{
+background:#333;
 padding:6px 10px;
 border-radius:6px;
-color:white;
 cursor:pointer;
+}
+
+.bookmark:hover{
+background:#444;
 }
 
 iframe{
-flex:1;
 width:100%;
+height:calc(100vh - 90px);
 border:none;
 background:white;
 }
 
 </style>
-
-<script>
-
-let tabs=[]
-let activeTab=0
-
-function createTab(url="https://example.com"){
-
-let id=tabs.length
-
-tabs.push({url:url,history:[url],index:0})
-
-let tab=document.createElement("div")
-tab.className="tab"
-tab.innerText="Tab "+(id+1)
-
-tab.onclick=function(){
-switchTab(id)
-}
-
-document.getElementById("tabs").appendChild(tab)
-
-switchTab(id)
-
-}
-
-function switchTab(id){
-
-activeTab=id
-
-document.querySelectorAll(".tab").forEach((t,i)=>{
-t.classList.toggle("active",i===id)
-})
-
-let tab=tabs[id]
-
-document.getElementById("view").src=tab.url
-document.getElementById("url").value=tab.url
-
-}
-
-function navigate(url){
-
-if(!url.startsWith("http")){
-url="https://"+url
-}
-
-let tab=tabs[activeTab]
-
-tab.url=url
-tab.history=tab.history.slice(0,tab.index+1)
-tab.history.push(url)
-tab.index++
-
-document.getElementById("view").src=url
-document.getElementById("url").value=url
-
-}
-
-function go(){
-
-navigate(document.getElementById("url").value)
-
-}
-
-function search(){
-
-let q=document.getElementById("url").value
-navigate("https://www.google.com/search?q="+encodeURIComponent(q))
-
-}
-
-function back(){
-
-let tab=tabs[activeTab]
-
-if(tab.index>0){
-
-tab.index--
-tab.url=tab.history[tab.index]
-document.getElementById("view").src=tab.url
-document.getElementById("url").value=tab.url
-
-}
-
-}
-
-function forward(){
-
-let tab=tabs[activeTab]
-
-if(tab.index<tab.history.length-1){
-
-tab.index++
-tab.url=tab.history[tab.index]
-document.getElementById("view").src=tab.url
-document.getElementById("url").value=tab.url
-
-}
-
-}
-
-function refresh(){
-
-document.getElementById("view").src=tabs[activeTab].url
-
-}
-
-function bookmark(url){
-
-navigate(url)
-
-}
-
-window.onload=function(){
-
-createTab("https://example.com")
-
-}
-
-</script>
-
 </head>
 
 <body>
 
-<div class="tabs" id="tabs">
+<div id="topbar">
 
-<div class="newtab" onclick="createTab()">+</div>
-
-</div>
-
-<div class="toolbar">
-
-<button onclick="back()">◀</button>
-<button onclick="forward()">▶</button>
-<button onclick="refresh()">⟳</button>
-
-<input id="url" class="address" placeholder="Search or enter website">
+<input id="url" placeholder="Search or enter website">
 
 <button onclick="go()">Go</button>
-<button onclick="search()">Search</button>
 
 </div>
 
-<div class="bookmarks">
+<div id="bookmarks">
 
-<button onclick="bookmark('https://www.google.com')">Google</button>
-<button onclick="bookmark('https://wikipedia.org')">Wikipedia</button>
-<button onclick="bookmark('https://github.com')">GitHub</button>
-<button onclick="bookmark('https://makerworld.com')">MakerWorld</button>
+<div class="bookmark" onclick="openSite('https://www.wikipedia.org')">Wikipedia</div>
+<div class="bookmark" onclick="openSite('https://makerworld.com')">MakerWorld</div>
+<div class="bookmark" onclick="openSite('https://github.com')">GitHub</div>
+<div class="bookmark" onclick="openSite('https://www.printables.com')">Printables</div>
 
 </div>
 
-<iframe id="view"></iframe>
+<iframe id="frame"></iframe>
+
+<script>
+
+function go(){
+
+let input=document.getElementById("url").value
+
+if(!input.startsWith("http")){
+
+if(input.includes(".")){
+input="https://"+input
+}else{
+input="https://www.google.com/search?q="+encodeURIComponent(input)
+}
+
+}
+
+document.getElementById("frame").src=input
+
+}
+
+function openSite(site){
+document.getElementById("frame").src=site
+}
+
+</script>
 
 </body>
-</html> 
+</html>
