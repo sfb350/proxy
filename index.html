@@ -2,87 +2,94 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Abe Browser</title>
+<title>AbeOS</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-background:#0f172a;
+overflow:hidden;
+background:linear-gradient(120deg,#0f172a,#1e293b);
+}
+
+#desktop{
+width:100vw;
+height:100vh;
+position:relative;
 color:white;
 }
 
-#topbar{
-display:flex;
-align-items:center;
-padding:10px;
-background:#1e293b;
+.icon{
+width:90px;
+text-align:center;
+cursor:pointer;
+margin:20px;
+display:inline-block;
 }
 
-#url{
+.icon img{
+width:60px;
+}
+
+.window{
+position:absolute;
+width:650px;
+height:420px;
+background:white;
+border-radius:8px;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+display:none;
+flex-direction:column;
+overflow:hidden;
+}
+
+.titlebar{
+background:#2563eb;
+color:white;
+padding:8px;
+cursor:move;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.window iframe{
 flex:1;
-padding:10px;
-border-radius:6px;
 border:none;
-font-size:16px;
+}
+
+textarea{
+flex:1;
+border:none;
+resize:none;
+padding:10px;
+}
+
+#taskbar{
+position:fixed;
+bottom:0;
+width:100%;
+height:40px;
+background:#111;
+display:flex;
+align-items:center;
+color:white;
+padding:0 10px;
+}
+
+#clock{
+margin-left:auto;
+}
+
+input{
+padding:6px;
+margin:5px;
 }
 
 button{
-margin-left:8px;
-padding:10px 14px;
-border:none;
-border-radius:6px;
-background:#3b82f6;
-color:white;
-cursor:pointer;
-}
-
-button:hover{
-background:#2563eb;
-}
-
-#tabs{
-display:flex;
-background:#111827;
-padding:5px;
-overflow-x:auto;
-}
-
-.tab{
-background:#374151;
 padding:6px 10px;
-margin-right:6px;
-border-radius:6px;
-cursor:pointer;
-}
-
-.tab.active{
-background:#3b82f6;
-}
-
-iframe{
-width:100%;
-height:calc(100vh - 100px);
-border:none;
-background:white;
-}
-
-#suggestions{
-position:absolute;
-background:#1e293b;
-width:300px;
-border-radius:6px;
-margin-top:4px;
-}
-
-.suggestion{
-padding:6px;
-cursor:pointer;
-}
-
-.suggestion:hover{
-background:#334155;
+margin:5px;
 }
 
 </style>
@@ -90,56 +97,120 @@ background:#334155;
 
 <body>
 
-<div id="tabs"></div>
+<div id="desktop">
 
-<div id="topbar">
-
-<input id="url" placeholder="Search or enter website" oninput="predict()">
-
-<button onclick="go()">Go</button>
-<button onclick="newTab()">New Tab</button>
-
+<div class="icon" onclick="openApp('browser')">
+<img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png">
+<div>Browser</div>
 </div>
 
-<div id="suggestions"></div>
+<div class="icon" onclick="openApp('notes')">
+<img src="https://cdn-icons-png.flaticon.com/512/3022/3022256.png">
+<div>Notes</div>
+</div>
+
+<div class="icon" onclick="openApp('calc')">
+<img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">
+<div>Calculator</div>
+</div>
+
+<div class="icon" onclick="openApp('terminal')">
+<img src="https://cdn-icons-png.flaticon.com/512/906/906324.png">
+<div>Terminal</div>
+</div>
+
+
+<div id="browser" class="window">
+
+<div class="titlebar">
+Browser
+<button onclick="closeApp('browser')">X</button>
+</div>
+
+<input id="url" placeholder="Search or enter website">
+<button onclick="go()">Go</button>
 
 <iframe id="frame"></iframe>
 
+</div>
+
+
+<div id="notes" class="window">
+
+<div class="titlebar">
+Notes
+<button onclick="closeApp('notes')">X</button>
+</div>
+
+<textarea id="noteArea"></textarea>
+
+</div>
+
+
+<div id="calc" class="window">
+
+<div class="titlebar">
+Calculator
+<button onclick="closeApp('calc')">X</button>
+</div>
+
+<div style="padding:10px">
+
+<input id="calcInput">
+
+<button onclick="calculate()">=</button>
+
+<div id="calcResult"></div>
+
+</div>
+
+</div>
+
+
+<div id="terminal" class="window">
+
+<div class="titlebar">
+Terminal
+<button onclick="closeApp('terminal')">X</button>
+</div>
+
+<div style="padding:10px;font-family:monospace">
+
+<div>> type "help"</div>
+
+<input id="termInput" onkeydown="terminal(event)">
+
+<div id="termOutput"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="taskbar">
+
+AbeOS
+
+<div id="clock"></div>
+
+</div>
+
 <script>
 
-let tabs=[]
-let activeTab=0
+function openApp(id){
 
-function newTab(){
+let w=document.getElementById(id)
 
-tabs.push("https://www.wikipedia.org")
-activeTab=tabs.length-1
-renderTabs()
-loadTab()
+w.style.display="flex"
+w.style.left="200px"
+w.style.top="120px"
 
 }
 
-function renderTabs(){
+function closeApp(id){
 
-let container=document.getElementById("tabs")
-container.innerHTML=""
-
-tabs.forEach((t,i)=>{
-
-let tab=document.createElement("div")
-tab.className="tab"+(i===activeTab?" active":"")
-
-tab.innerText="Tab "+(i+1)
-
-tab.onclick=()=>{
-activeTab=i
-loadTab()
-renderTabs()
-}
-
-container.appendChild(tab)
-
-})
+document.getElementById(id).style.display="none"
 
 }
 
@@ -148,66 +219,98 @@ function go(){
 let input=document.getElementById("url").value
 
 if(!input.startsWith("http")){
-
-if(input.includes(".")){
-input="https://"+input
-}else{
 input="https://www.google.com/search?q="+encodeURIComponent(input)
 }
 
-}
-
-tabs[activeTab]=input
-loadTab()
-
-saveHistory(input)
+document.getElementById("frame").src=input
 
 }
 
-function loadTab(){
+function calculate(){
 
-document.getElementById("frame").src=tabs[activeTab]
+let val=document.getElementById("calcInput").value
 
-}
-
-function saveHistory(site){
-
-let history=JSON.parse(localStorage.getItem("history")||"[]")
-history.unshift(site)
-history=history.slice(0,20)
-localStorage.setItem("history",JSON.stringify(history))
+document.getElementById("calcResult").innerText=eval(val)
 
 }
 
-function predict(){
+function terminal(e){
 
-let input=document.getElementById("url").value.toLowerCase()
-let history=JSON.parse(localStorage.getItem("history")||"[]")
+if(e.key==="Enter"){
 
-let suggestions=history.filter(h=>h.toLowerCase().includes(input)).slice(0,5)
+let cmd=document.getElementById("termInput").value
+let out=document.getElementById("termOutput")
 
-let box=document.getElementById("suggestions")
-box.innerHTML=""
-
-suggestions.forEach(s=>{
-
-let div=document.createElement("div")
-div.className="suggestion"
-div.innerText=s
-
-div.onclick=()=>{
-document.getElementById("url").value=s
-go()
-box.innerHTML=""
+if(cmd==="help"){
+out.innerHTML+="<div>commands: help, time, about</div>"
 }
 
-box.appendChild(div)
+else if(cmd==="time"){
+out.innerHTML+="<div>"+new Date()+"</div>"
+}
+
+else if(cmd==="about"){
+out.innerHTML+="<div>AbeOS Web Desktop</div>"
+}
+
+else{
+out.innerHTML+="<div>command not found</div>"
+}
+
+document.getElementById("termInput").value=""
+
+}
+
+}
+
+function updateClock(){
+
+let d=new Date()
+
+document.getElementById("clock").innerText=d.toLocaleTimeString()
+
+}
+
+setInterval(updateClock,1000)
+
+
+let windows=document.querySelectorAll(".window")
+
+windows.forEach(win=>{
+
+let bar=win.querySelector(".titlebar")
+
+bar.onmousedown=function(e){
+
+let shiftX=e.clientX-win.getBoundingClientRect().left
+let shiftY=e.clientY-win.getBoundingClientRect().top
+
+function moveAt(x,y){
+
+win.style.left=x-shiftX+"px"
+win.style.top=y-shiftY+"px"
+
+}
+
+function onMouseMove(e){
+
+moveAt(e.pageX,e.pageY)
+
+}
+
+document.addEventListener("mousemove",onMouseMove)
+
+document.onmouseup=function(){
+
+document.removeEventListener("mousemove",onMouseMove)
+
+document.onmouseup=null
+
+}
+
+}
 
 })
-
-}
-
-newTab()
 
 </script>
 
