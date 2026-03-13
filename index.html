@@ -9,22 +9,22 @@
 body{
 margin:0;
 font-family:Arial;
-background:#111;
+background:#0f172a;
 color:white;
 }
 
 #topbar{
 display:flex;
+align-items:center;
 padding:10px;
-background:#1e1e1e;
-box-shadow:0 2px 10px rgba(0,0,0,0.5);
+background:#1e293b;
 }
 
 #url{
 flex:1;
 padding:10px;
-border:none;
 border-radius:6px;
+border:none;
 font-size:16px;
 }
 
@@ -42,29 +42,47 @@ button:hover{
 background:#2563eb;
 }
 
-#bookmarks{
-background:#1a1a1a;
-padding:8px;
+#tabs{
 display:flex;
-gap:10px;
+background:#111827;
+padding:5px;
+overflow-x:auto;
 }
 
-.bookmark{
-background:#333;
+.tab{
+background:#374151;
 padding:6px 10px;
+margin-right:6px;
 border-radius:6px;
 cursor:pointer;
 }
 
-.bookmark:hover{
-background:#444;
+.tab.active{
+background:#3b82f6;
 }
 
 iframe{
 width:100%;
-height:calc(100vh - 90px);
+height:calc(100vh - 100px);
 border:none;
 background:white;
+}
+
+#suggestions{
+position:absolute;
+background:#1e293b;
+width:300px;
+border-radius:6px;
+margin-top:4px;
+}
+
+.suggestion{
+padding:6px;
+cursor:pointer;
+}
+
+.suggestion:hover{
+background:#334155;
 }
 
 </style>
@@ -72,26 +90,58 @@ background:white;
 
 <body>
 
+<div id="tabs"></div>
+
 <div id="topbar">
 
-<input id="url" placeholder="Search or enter website">
+<input id="url" placeholder="Search or enter website" oninput="predict()">
 
 <button onclick="go()">Go</button>
+<button onclick="newTab()">New Tab</button>
 
 </div>
 
-<div id="bookmarks">
-
-<div class="bookmark" onclick="openSite('https://www.wikipedia.org')">Wikipedia</div>
-<div class="bookmark" onclick="openSite('https://makerworld.com')">MakerWorld</div>
-<div class="bookmark" onclick="openSite('https://github.com')">GitHub</div>
-<div class="bookmark" onclick="openSite('https://www.printables.com')">Printables</div>
-
-</div>
+<div id="suggestions"></div>
 
 <iframe id="frame"></iframe>
 
 <script>
+
+let tabs=[]
+let activeTab=0
+
+function newTab(){
+
+tabs.push("https://www.wikipedia.org")
+activeTab=tabs.length-1
+renderTabs()
+loadTab()
+
+}
+
+function renderTabs(){
+
+let container=document.getElementById("tabs")
+container.innerHTML=""
+
+tabs.forEach((t,i)=>{
+
+let tab=document.createElement("div")
+tab.className="tab"+(i===activeTab?" active":"")
+
+tab.innerText="Tab "+(i+1)
+
+tab.onclick=()=>{
+activeTab=i
+loadTab()
+renderTabs()
+}
+
+container.appendChild(tab)
+
+})
+
+}
 
 function go(){
 
@@ -107,13 +157,57 @@ input="https://www.google.com/search?q="+encodeURIComponent(input)
 
 }
 
-document.getElementById("frame").src=input
+tabs[activeTab]=input
+loadTab()
+
+saveHistory(input)
 
 }
 
-function openSite(site){
-document.getElementById("frame").src=site
+function loadTab(){
+
+document.getElementById("frame").src=tabs[activeTab]
+
 }
+
+function saveHistory(site){
+
+let history=JSON.parse(localStorage.getItem("history")||"[]")
+history.unshift(site)
+history=history.slice(0,20)
+localStorage.setItem("history",JSON.stringify(history))
+
+}
+
+function predict(){
+
+let input=document.getElementById("url").value.toLowerCase()
+let history=JSON.parse(localStorage.getItem("history")||"[]")
+
+let suggestions=history.filter(h=>h.toLowerCase().includes(input)).slice(0,5)
+
+let box=document.getElementById("suggestions")
+box.innerHTML=""
+
+suggestions.forEach(s=>{
+
+let div=document.createElement("div")
+div.className="suggestion"
+div.innerText=s
+
+div.onclick=()=>{
+document.getElementById("url").value=s
+go()
+box.innerHTML=""
+}
+
+box.appendChild(div)
+
+})
+
+}
+
+newTab()
 
 </script>
 
