@@ -2,94 +2,83 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>AbeOS</title>
+<title>Abe Browser</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-overflow:hidden;
-background:linear-gradient(120deg,#0f172a,#1e293b);
-}
-
-#desktop{
-width:100vw;
-height:100vh;
-position:relative;
+background:#0f172a;
 color:white;
 }
 
-.icon{
-width:90px;
-text-align:center;
-cursor:pointer;
-margin:20px;
-display:inline-block;
-}
-
-.icon img{
-width:60px;
-}
-
-.window{
-position:absolute;
-width:650px;
-height:420px;
-background:white;
-border-radius:8px;
-box-shadow:0 10px 30px rgba(0,0,0,0.5);
-display:none;
-flex-direction:column;
-overflow:hidden;
-}
-
-.titlebar{
-background:#2563eb;
-color:white;
-padding:8px;
-cursor:move;
+#topbar{
 display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.window iframe{
-flex:1;
-border:none;
-}
-
-textarea{
-flex:1;
-border:none;
-resize:none;
 padding:10px;
+background:#1e293b;
+gap:8px;
 }
 
-#taskbar{
-position:fixed;
-bottom:0;
-width:100%;
-height:40px;
-background:#111;
-display:flex;
-align-items:center;
-color:white;
-padding:0 10px;
-}
-
-#clock{
-margin-left:auto;
-}
-
-input{
-padding:6px;
-margin:5px;
+#url{
+flex:1;
+padding:10px;
+border:none;
+border-radius:6px;
+font-size:16px;
 }
 
 button{
+padding:10px 14px;
+border:none;
+border-radius:6px;
+background:#3b82f6;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#2563eb;
+}
+
+#tabs{
+display:flex;
+background:#111827;
+padding:6px;
+gap:6px;
+overflow-x:auto;
+}
+
+.tab{
 padding:6px 10px;
-margin:5px;
+background:#374151;
+border-radius:6px;
+cursor:pointer;
+}
+
+.tab.active{
+background:#3b82f6;
+}
+
+#gamesPanel{
+display:none;
+padding:20px;
+}
+
+.game{
+background:#1e293b;
+padding:20px;
+margin:10px;
+border-radius:10px;
+display:inline-block;
+cursor:pointer;
+}
+
+iframe{
+width:100%;
+height:calc(100vh - 110px);
+border:none;
+background:white;
 }
 
 </style>
@@ -97,120 +86,72 @@ margin:5px;
 
 <body>
 
-<div id="desktop">
+<div id="tabs"></div>
 
-<div class="icon" onclick="openApp('browser')">
-<img src="https://cdn-icons-png.flaticon.com/512/1006/1006771.png">
-<div>Browser</div>
-</div>
-
-<div class="icon" onclick="openApp('notes')">
-<img src="https://cdn-icons-png.flaticon.com/512/3022/3022256.png">
-<div>Notes</div>
-</div>
-
-<div class="icon" onclick="openApp('calc')">
-<img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">
-<div>Calculator</div>
-</div>
-
-<div class="icon" onclick="openApp('terminal')">
-<img src="https://cdn-icons-png.flaticon.com/512/906/906324.png">
-<div>Terminal</div>
-</div>
-
-
-<div id="browser" class="window">
-
-<div class="titlebar">
-Browser
-<button onclick="closeApp('browser')">X</button>
-</div>
+<div id="topbar">
 
 <input id="url" placeholder="Search or enter website">
+
 <button onclick="go()">Go</button>
+
+<button onclick="newTab()">New Tab</button>
+
+<button onclick="toggleGames()">Games</button>
+
+</div>
+
+<div id="gamesPanel">
+
+<div class="game" onclick="openGame('snake')">Snake</div>
+<div class="game" onclick="openGame('tetris')">Tetris</div>
+<div class="game" onclick="openGame('pong')">Pong</div>
+<div class="game" onclick="openGame('clicker')">Clicker</div>
+
+<div id="gameArea"></div>
+
+</div>
 
 <iframe id="frame"></iframe>
 
-</div>
-
-
-<div id="notes" class="window">
-
-<div class="titlebar">
-Notes
-<button onclick="closeApp('notes')">X</button>
-</div>
-
-<textarea id="noteArea"></textarea>
-
-</div>
-
-
-<div id="calc" class="window">
-
-<div class="titlebar">
-Calculator
-<button onclick="closeApp('calc')">X</button>
-</div>
-
-<div style="padding:10px">
-
-<input id="calcInput">
-
-<button onclick="calculate()">=</button>
-
-<div id="calcResult"></div>
-
-</div>
-
-</div>
-
-
-<div id="terminal" class="window">
-
-<div class="titlebar">
-Terminal
-<button onclick="closeApp('terminal')">X</button>
-</div>
-
-<div style="padding:10px;font-family:monospace">
-
-<div>> type "help"</div>
-
-<input id="termInput" onkeydown="terminal(event)">
-
-<div id="termOutput"></div>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="taskbar">
-
-AbeOS
-
-<div id="clock"></div>
-
-</div>
-
 <script>
 
-function openApp(id){
+let tabs=[]
+let active=0
 
-let w=document.getElementById(id)
+function newTab(){
 
-w.style.display="flex"
-w.style.left="200px"
-w.style.top="120px"
+tabs.push("https://www.wikipedia.org")
+active=tabs.length-1
+
+renderTabs()
+load()
 
 }
 
-function closeApp(id){
+function renderTabs(){
 
-document.getElementById(id).style.display="none"
+let bar=document.getElementById("tabs")
+bar.innerHTML=""
+
+tabs.forEach((t,i)=>{
+
+let tab=document.createElement("div")
+
+tab.className="tab"+(i===active?" active":"")
+
+tab.innerText="Tab "+(i+1)
+
+tab.onclick=()=>{
+
+active=i
+renderTabs()
+load()
+
+}
+
+bar.appendChild(tab)
+
+})
 
 }
 
@@ -219,98 +160,72 @@ function go(){
 let input=document.getElementById("url").value
 
 if(!input.startsWith("http")){
+
+if(input.includes(".")){
+input="https://"+input
+}else{
 input="https://www.google.com/search?q="+encodeURIComponent(input)
 }
 
-document.getElementById("frame").src=input
+}
+
+tabs[active]=input
+
+load()
 
 }
 
-function calculate(){
+function load(){
 
-let val=document.getElementById("calcInput").value
+document.getElementById("frame").style.display="block"
+document.getElementById("gamesPanel").style.display="none"
 
-document.getElementById("calcResult").innerText=eval(val)
-
-}
-
-function terminal(e){
-
-if(e.key==="Enter"){
-
-let cmd=document.getElementById("termInput").value
-let out=document.getElementById("termOutput")
-
-if(cmd==="help"){
-out.innerHTML+="<div>commands: help, time, about</div>"
-}
-
-else if(cmd==="time"){
-out.innerHTML+="<div>"+new Date()+"</div>"
-}
-
-else if(cmd==="about"){
-out.innerHTML+="<div>AbeOS Web Desktop</div>"
-}
-
-else{
-out.innerHTML+="<div>command not found</div>"
-}
-
-document.getElementById("termInput").value=""
+document.getElementById("frame").src=tabs[active]
 
 }
 
-}
+function toggleGames(){
 
-function updateClock(){
-
-let d=new Date()
-
-document.getElementById("clock").innerText=d.toLocaleTimeString()
+document.getElementById("frame").style.display="none"
+document.getElementById("gamesPanel").style.display="block"
 
 }
 
-setInterval(updateClock,1000)
+function openGame(game){
 
+let area=document.getElementById("gameArea")
 
-let windows=document.querySelectorAll(".window")
+if(game==="clicker"){
 
-windows.forEach(win=>{
-
-let bar=win.querySelector(".titlebar")
-
-bar.onmousedown=function(e){
-
-let shiftX=e.clientX-win.getBoundingClientRect().left
-let shiftY=e.clientY-win.getBoundingClientRect().top
-
-function moveAt(x,y){
-
-win.style.left=x-shiftX+"px"
-win.style.top=y-shiftY+"px"
+area.innerHTML=`<h2>Clicker Game</h2>
+<button onclick="score++ ; document.getElementById('score').innerText=score">Click</button>
+<div id="score">0</div>`
 
 }
 
-function onMouseMove(e){
+if(game==="snake"){
 
-moveAt(e.pageX,e.pageY)
+area.innerHTML=`<iframe src="https://playsnake.org"></iframe>`
 
 }
 
-document.addEventListener("mousemove",onMouseMove)
+if(game==="tetris"){
 
-document.onmouseup=function(){
+area.innerHTML=`<iframe src="https://tetris.com/play-tetris"></iframe>`
 
-document.removeEventListener("mousemove",onMouseMove)
+}
 
-document.onmouseup=null
+if(game==="pong"){
+
+area.innerHTML=`<iframe src="https://ponggame.org"></iframe>`
 
 }
 
 }
 
-})
+let score=0
+
+newTab()
 
 </script>
 
